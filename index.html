@@ -42,6 +42,12 @@
             socket.emit('set username', username); // Send username to server
         }
 
+        
+        // typing event listener
+        input.addEventListener('input', () => {
+            if (username) handleTyping();
+        });
+
         // --- Sending Messages ---
         // Add an event listener for when the form is submitted
         form.addEventListener('submit', function(event) {
@@ -50,6 +56,8 @@
                 // Emit a 'chat message' event to the server with the input value
                 socket.emit('chat message', input.value);
                 input.value = ''; // Clear the input field
+                typing = false;
+                socket.emit('stop typing');
             }
         });
 
@@ -90,6 +98,56 @@
             console.log('❌ Disconnected from server');
             displayMessage('System', 'You have been disconnected.', true);
         });
+
+        // typing declarations
+        let typing = false;
+        let typingTimeout;
+
+        // event listener to listen for input 
+        input.addEventListener('input', () => {
+            if (!username) return;
+
+            if (!typing) {
+                typing = true;
+                socket.emit('typing');
+            }
+
+            // emit stop typing after a short while has passed
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                typing = false;
+                socket.emit('stop typing');
+            }, 1000);
+        });
+
+        socket.on('user typing', (user) => {
+            displayTypingIndicator(`${user} is typing...`);
+        });
+
+        socket.on('user stop typing', () => {
+            clearTypingIndicator();
+        });
+
+        // display typing indicator in a similar fashion to messages
+        function displayTypingIndicator(text) {
+            let indicator = document.getElementById('typing-indicator');
+            if (!indicator) {
+                indicator = document.createElement('li');
+                indicator.id = 'typing-indicator';
+                indicator.style.fontStyle = 'italic';
+                indicator.style.color = 'gray';
+                messages.appendChild(indicator);
+            }
+            indicator.textContent = text;
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function clearTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
 
     </script>
 </body>

@@ -77,6 +77,20 @@ io.on('connection', async (socket) => {
     }
   });
 
+  // listen for typing and stop typing
+  socket.on('typing', () => {
+    const username = users[socket.id];
+    if (username) {
+      socket.broadcast.emit('user typing', username);
+    }
+  });
+// listen for typing and stop typing
+  socket.on('stop typing', () => {
+    const username = users[socket.id];
+    if (username) {
+      socket.broadcast.emit('user stop typing');
+    }
+  });
 
   // Listen for 'disconnect' events
   // ANONYMOUS FUNCTION CALLBACK
@@ -108,6 +122,7 @@ io.on('connection', async (socket) => {
     }
   });
 });
+
 // --- End Socket.IO Logic ---
 
 
